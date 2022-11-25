@@ -59,7 +59,10 @@ class StarGraphs:
         first_cluster_vertex, second_cluster_vertex = [], []
         for i, structured_graph in enumerate(self.graphs):
             if structured_graph.type == StarGraphType.first_cluster:
-                first_cluster_vertex += structured_graph.adj_vertex
+                if i != 0:
+                    first_cluster_vertex += structured_graph.adj_vertex[1:]
+                else:
+                    first_cluster_vertex += structured_graph.adj_vertex
             else:
                 if i == len(self.graphs) - 1:
                     second_cluster_vertex += structured_graph.adj_vertex
@@ -74,45 +77,51 @@ class StarGraphs:
 
             for g1, g2 in pairwise(self.graphs, True):
                 if self.first_cluster_count > 0:
-                    result.append(Edge(g1.adj_vertex[-1], g2.vertex))
+                    result.append(Edge(g1.adj_vertex[-1], g2.vertex, 'red'))
                 else:
-                    result.append(Edge(g1.vertex, g2.adj_vertex[0]))
+                    result.append(Edge(g1.vertex, g2.adj_vertex[0], 'red'))
 
             for g in self.graphs:
                 for v1, v2 in pairwise(g.adj_vertex, False):
-                    result.append(Edge(v1, v2))
+                    result.append(Edge(v1, v2, 'red'))
         else:
             for g1, g2 in pairwise(self.graphs, False):
                 if g1.type == StarGraphType.first_cluster:
                     if g2.type == StarGraphType.first_cluster:
-                        result.append(Edge(g2.adj_vertex[0], g1.vertex))
+                        result.append(Edge(g2.adj_vertex[0], g1.vertex, 'red'))
                     else:
-                        result.append(Edge(g2.vertex, g1.vertex))
+                        result.append(Edge(g2.vertex, g1.vertex, 'red'))
                 else:
                     if g2.type == StarGraphType.first_cluster:
-                        result.append(Edge(g2.vertex, g1.vertex))
+                        result.append(Edge(g2.vertex, g1.vertex, 'red'))
                     else:
-                        result.append(Edge(g2.vertex, g1.adj_vertex[-1]))
+                        result.append(Edge(g2.vertex, g1.adj_vertex[-1], 'red'))
 
             first_cluster_vertex, second_cluster_vertex = self.get_clusters_vertexes()
 
             i = 0
             for v1, v2 in zip(first_cluster_vertex, second_cluster_vertex):
-                result.append(Edge(v1, v2))
+                result.append(Edge(v1, v2, 'blue'))
                 i += 1
 
             j = i - 1
             while i < len(first_cluster_vertex):
-                result.append(Edge(first_cluster_vertex[i], second_cluster_vertex[j]))
+                result.append(Edge(first_cluster_vertex[i], second_cluster_vertex[j], 'blue'))
                 i += 1
             while i < len(second_cluster_vertex):
-                result.append(Edge(first_cluster_vertex[j], second_cluster_vertex[i]))
+                result.append(Edge(first_cluster_vertex[j], second_cluster_vertex[i], 'blue'))
                 i += 1
 
         return result
 
     def get_edges_for_strongly_connected_one(self) -> list[Edge]:
         pass
+
+    def is_root(self, node) -> bool:
+        return any(graph.vertex == node for graph in self.graphs)
+
+    def get_colors_for_node(self, g) -> list[str]:
+        return ['#555d50' if self.is_root(node) else '#989898' for node in g]
 
     def get_networkx_digraph(self, edges, new_edges) -> nx.DiGraph:
         g = nx.DiGraph()
@@ -134,18 +143,19 @@ class StarGraphs:
             vertex_len = len(structured_graph.adj_vertex)
             global_padding += padding
             g.add_node(structured_graph.vertex,
-                       pos=(global_padding + ((2 * vertex_len) * padding) / 2, first_part_pos_x_local))
+                       pos=(global_padding + ((2 * vertex_len) * padding) / 2, first_part_pos_x_local),
+                       node_color='red')
 
             for i, adj_vertex_ in enumerate(structured_graph.adj_vertex):
                 global_padding += padding
-                g.add_node(adj_vertex_, pos=(global_padding + padding, second_part_pos_x_local))
+                g.add_node(adj_vertex_, pos=(global_padding + padding, second_part_pos_x_local), color="red")
 
         # add edges
         for edge in edges:
-            g.add_edge(edge.vertex, edge.vertex_to, color='blue')
+            g.add_edge(edge.vertex, edge.vertex_to, color='black')
 
         # add new edges
         for edge in new_edges:
-            g.add_edge(edge.vertex, edge.vertex_to, color='red')
+            g.add_edge(edge.vertex, edge.vertex_to, color=edge.color)
 
         return g

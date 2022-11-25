@@ -8,11 +8,11 @@ import networkx as nx
 from acycling_digraph_problem import parser, Graph
 
 
-def show_networkx_digraph(g):
+def show_networkx_digraph(g, node_colors):
     pos = nx.get_node_attributes(g, 'pos')
 
     edges, colors = zip(*nx.get_edge_attributes(g, 'color').items())
-    nx.draw_networkx_nodes(g, pos, node_size=400)
+    nx.draw_networkx_nodes(g, pos, node_color=node_colors, node_size=400)
     nx.draw_networkx_labels(g, pos)
     nx.draw_networkx_edges(g, pos, edge_color=colors, arrows=True)
     plt.figure(figsize=(400, 200), dpi=10)
@@ -57,7 +57,8 @@ def main():
 
         if len(edges) > 1:
             if show:
-                show_networkx_digraph(g)
+                node_colors = star_graphs.get_colors_for_node(g)
+                show_networkx_digraph(g, node_colors)
         else:
             print("nothing to do. input file is empty")
 
